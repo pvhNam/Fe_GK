@@ -2,45 +2,34 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Snake</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rắn săn mồi</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="game">
-  <main>
-    <section id="level-menu">
-      <div class="menu-heading">
-        <h1>Snake</h1>
-        <p>Chọn màn chơi</p>
+<main>
+  <h1>Rắn săn mồi</h1>
+  <section id="level-menu">
+    <p>Chọn màn chơi:</p>
+    <div id="level-list"></div>
+    <button id="resume-game" hidden>Tiếp tục lượt đang chơi</button>
+  </section>
+  <section id="game" hidden>
+    <div class="game-toolbar">
+      <button id="choose-level">Chọn màn</button>
+      <button id="pause-game">Tạm dừng · P</button>
+    </div>
+    <div id="hud"><span id="lvl"></span><span id="obj"></span><span id="sc"></span></div>
+    <p id="rule"></p>
+    <div id="board">
+      <canvas id="c" width="600" height="600" tabindex="0" aria-label="Bàn chơi rắn săn mồi"></canvas>
+      <div id="ov" hidden>
+        <h2 id="ot"></h2><p id="op"></p><button id="ob"></button>
       </div>
-      <div id="level-list" class="level-list"></div>
-      <button id="resume" class="secondary-button" type="button" hidden>Tiếp tục lượt đang chơi</button>
-    </section>
-
-    <section id="game-levels" hidden>
-      <div class="game-toolbar">
-        <button id="choose-level" class="secondary-button" type="button">← Chọn màn</button>
-        <button id="pause-game" class="secondary-button" type="button">Tạm dừng · P</button>
-      </div>
-      <div id="hud">
-        <span id="lvl"></span>
-        <span id="obj"></span>
-        <span id="sc"></span>
-      </div>
-      <div id="board">
-        <canvas id="c" width="600" height="600" tabindex="0"></canvas>
-        <div id="ov" hidden>
-          <h2 id="ot"></h2>
-          <p id="op"></p>
-          <button id="ob" class="primary-button" type="button"></button>
-        </div>
-      </div>
-      <p class="hint">Di chuyển: phím mũi tên / WASD · Bắn: Space · Tạm dừng: P</p>
-    </section>
-  </main>
-</div>
-
+    </div>
+    <p class="help">Di chuyển: phím mũi tên / WASD · Tạm dừng: P<br>Bắn ở màn 4: Space · Điện thoại: vuốt để rẽ, chạm để bắn.</p>
+  </section>
+</main>
 <script src="levels/level_1.js"></script>
 <script src="levels/level_2.js"></script>
 <script src="levels/level_3.js"></script>
