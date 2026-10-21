@@ -4,13 +4,82 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rắn săn mồi</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+* {
+    box-sizing: border-box; 
+    }
+[hidden] {
+    display: none !important; 
+    }
+body {
+    margin: 0;
+    font: 16px Arial, sans-serif;
+    color: #222; 
+    background: #f5f5f5; 
+    }
+main {
+    width: min(600px, calc(100% - 24px));
+    margin: 24px auto; 
+    }
+h1, .help { 
+    text-align: center;
+ }
+button {
+    padding: 10px 14px;
+    font: inherit; 
+    cursor: pointer; 
+    }
+button:disabled {
+    cursor: default;
+     }
+button:focus-visible,canvas:focus-visible {
+    outline: 2px solid #16703c;
+    outline-offset: 2px;
+     }
+#level-list {
+    display: grid;
+    gap: 10px;
+     }
+#resume-game {
+    margin-top: 16px;
+     }
+.game-toolbar, #hud {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+     }
+#board {
+    position: relative;
+ }
+canvas { 
+    display: block;
+    width: 100%; 
+    border: 1px solid #666; 
+}
+#ov { 
+    position: absolute; 
+    inset: 0; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    padding: 12px; 
+    text-align: center;
+    background: #fffffff0;
+}
+.help { 
+    font-size: 14px; 
+    line-height: 1.6; 
+}
+  </style>
 </head>
 <body>
 <main>
   <h1>Rắn săn mồi</h1>
   <section id="level-menu">
-    <p>Chọn màn chơi:</p>
+    <p>Chơi bằng bàn phím. Chọn bất kỳ màn nào để bắt đầu.</p>
     <div id="level-list"></div>
     <button id="resume-game" hidden>Tiếp tục lượt đang chơi</button>
   </section>
@@ -27,14 +96,9 @@
         <h2 id="ot"></h2><p id="op"></p><button id="ob"></button>
       </div>
     </div>
-    <p class="help">Di chuyển: phím mũi tên / WASD · Tạm dừng: P<br>Bắn ở màn 4: Space · Điện thoại: vuốt để rẽ, chạm để bắn.</p>
+    <p class="help">Di chuyển: phím mũi tên / WASD · Tạm dừng: P<br>Bắn ở màn 3: Space · Nhấn Enter tại thông báo để tiếp tục hoặc chơi lại.</p>
   </section>
 </main>
-<script src="levels/level_1.js"></script>
-<script src="levels/level_2.js"></script>
-<script src="levels/level_3.js"></script>
-<script src="levels/level_4.js"></script>
-<script src="levels/level_5.js"></script>
-<script src="script.js"></script>
+<script src="game.js"></script>
 </body>
 </html>
