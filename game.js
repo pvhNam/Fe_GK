@@ -1,17 +1,18 @@
-// 1. Thông tin các màn chơi
-// index đếm từ 0: 0 = màn 1, 1 = màn 2, 2 = màn 3, 3 = màn 4, 4 = màn 5.
-// Các màn dùng chung hàm start(), step() và draw(); phần riêng được ghi chú bên dưới.
+// 1. Thông tin các màn chơi (index 0 đến 5 tương ứng màn 1 đến 6).
 const levels = [
-  // MÀN 1 - Cổ điển: ăn 15 táo, đi xuyên mép bàn.
   {name: 'Cổ điển', need: 15,
     description: 'Ăn 15 táo. Rắn có thể đi xuyên qua mép bàn.'},
-  // MÀN 2 - Giải đố mê cung: ăn 8 táo rồi tìm Táo Vàng.
   {name: 'Giải đố mê cung', need: 8,
     description: 'Ăn 8 táo bên ngoài để mở cửa bên trái mê cung, sau đó vào ăn Táo Vàng.'},
-  // MÀN 3 - Tấn công Táo: bắn phá giáp rồi ăn 10 táo.
   {name: 'Tấn công Táo', need: 10,
     description: 'Nhấn Space phá giáp táo rồi ăn. Cần 10 quả để qua màn.'},
-  
+  {name: 'Vượt chướng ngại vật', need: 10,
+    description: 'Ăn 10 táo và tránh vật tím. Số vật tăng khi ăn 4, 7, 9 quả.'},
+  {name: 'Thoát khỏi khu rừng', need: 8,
+    description: 'Ăn 8 táo để xuất hiện chìa khóa vàng. Lấy khóa rồi tới cửa ở góc dưới bên phải.'},
+  // MÀN 6: mỗi quả táo làm đổi ngược phím trái/phải một lần.
+  {name: 'Đảo trái phải', need: 10,
+    description: 'Ăn mỗi quả táo sẽ đổi trái/phải: bình thường → đảo ngược → bình thường. Khi đảo, ←/A đi phải và →/D đi trái; lên/xuống giữ nguyên. Ăn 10 táo để thắng.'}
 ];
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
@@ -20,6 +21,7 @@ const directions = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 let level, index, snake, dir, queue, walls, obstacles, bullets;
 let apple, gold, key, gate, door, hasKey;
 let score, base, eaten, elapsed, obstacleTime, lastShot, savedState;
+let reverseControls;
 let state = 'menu';
 
 function get(id) {
@@ -61,6 +63,7 @@ function start(i, points = 0) {
   eaten = 0; 
   elapsed = 0; 
   obstacleTime = 0; 
+  reverseControls = false;
   lastShot = -Infinity;
   hasKey = false; 
   savedState = null;
@@ -76,15 +79,17 @@ function start(i, points = 0) {
   door = null;
   dir = [1, 0];
   let x = 3, y = 3;
-  
-  // MÀN 2, 3, 4, 5: tạo tường bao quanh; màn 1 không có tường.
+  if (index === 4) {
+     x = 12; y = 12; 
+    }
+  for (let j = 0; j < 3; j++) 
+    snake.push({x: x - j, y: y});
   if (index !== 0) {
     wall(0, 0, 25, 1); 
     wall(0, 24, 25, 1);
     wall(0, 1, 1, 23); 
     wall(24, 1, 1, 23);
   }
-  // MÀN 2: tạo các bức tường bên trong và cửa mê cung đang khóa.
   if (index === 1) {
     wall(7, 7, 13, 1); 
     wall(7, 19, 13, 1);
@@ -95,6 +100,26 @@ function start(i, points = 0) {
     gate = {x: 7, y: 12}; 
     removeWall(gate);
   }
+  if (index === 4) {
+    wall(6, 1, 1, 8); 
+    wall(6, 12, 1, 9);
+    wall(18, 4, 1, 9); 
+    wall(18, 16, 1, 8);
+    wall(10, 5, 9, 1); 
+    wall(6, 17, 9, 1);
+    wall(10, 9, 1, 3); 
+    wall(14, 13, 1, 5);
+    wall(1, 13, 3, 1); 
+    wall(21, 9, 3, 1);
+    door = {x: 24, y: 23}; 
+    removeWall(door);
+  }
+  apple = spawn('apple');
+  if (index === 3) 
+    addObstacles();
+  get('level-menu').hidden = true;
+  get('game').hidden = false;
+  setState('playing');
 }
 
 // Chọn ô trống để vật phẩm không trùng rắn hoặc tường.
@@ -103,14 +128,12 @@ function spawn(type) {
   for (let y = 0; y < N; y++) {
     for (let x = 0; x < N; x++) {
       let p = {x: x, y: y, shield: 0};
-      // MÀN 3: mỗi quả táo mới có một lớp giáp.
       if (index === 2) 
         p.shield = 1;
       if (contains(walls, p) || contains(snake, p) || contains(obstacles, p)) 
         continue;
       if (same(p, apple) || same(p, gold) || same(p, key) || same(p, gate) || same(p, door)) 
         continue;
-      // MÀN 2: táo thường ở ngoài, Táo Vàng ở trong mê cung.
       if (type === 'apple' && index === 1 && insideMaze(p)) 
         continue;
       if (type === 'gold' && !insideMaze(p)) 
@@ -128,12 +151,15 @@ function step() {
   if (queue.length > 0) 
     dir = queue.shift();
   let head = {x: snake[0].x + dir[0], y: snake[0].y + dir[1]};
-  // MÀN 1: ra khỏi một mép bàn thì xuất hiện ở mép đối diện.
   if (index === 0) {
     head.x = (head.x + N) % N;
     head.y = (head.y + N) % N;
   }
-
+  if (same(head, door)) {
+    if (hasKey) complete();
+    else setState('dead');
+    return;
+  }
   let eat = same(head, apple) && apple.shield === 0;
   let body = snake.slice();
   if (!eat) body.pop(); // Đuôi sẽ rời ô hiện tại nếu rắn không ăn táo.
@@ -145,38 +171,44 @@ function step() {
   snake.unshift(head);
   if (!eat) 
     snake.pop();
-  // MÀN 2: ăn Táo Vàng để hoàn thành màn.
   if (same(head, gold)) { 
     gold = null; 
     score += 50; 
     complete(); 
     return; 
   }
- 
+  if (same(head, key)) {
+    key = null; 
+    hasKey = true; 
+    score += 20; 
+  }
   if (eat) {
     eaten++; 
     score += 10; 
+    // MÀN 6: chỉ đổi cách bấm phím, không tự quay đầu rắn.
+    if (index === 5) reverseControls = !reverseControls;
     apple = null;
     if (eaten < level.need) 
       apple = spawn('apple');
-    // MÀN 2: đủ 8 táo thì mở cửa mê cung và sinh Táo Vàng.
     else if (index === 1) { 
       gate = null; 
       gold = spawn('gold'); 
     }
-    // MÀN 5: đủ 8 táo thì chìa khóa mới xuất hiện.
     else if (index === 4) 
       key = spawn('key');
-    // MÀN 1, 3, 4: đủ số táo yêu cầu là hoàn thành màn.
     else { 
       complete(); 
       return; 
     }
-    
+    if (index === 3) 
+      addObstacles();
+  }
 }
 function turn(next) {
   if (state !== 'playing' || queue.length >= 2) 
     return;
+  // MÀN 6: đảo phần trái/phải, còn lên/xuống không đổi.
+  if (index === 5 && reverseControls) next = [-next[0], next[1]];
   let previous = dir;
   if (queue.length > 0) 
     previous = queue[queue.length - 1];
@@ -185,7 +217,7 @@ function turn(next) {
     queue.push(next);
 }
 
-// MÀN 3 - Tấn công Táo: bắn đạn và phá giáp táo.
+// 4. Màn 3: bắn phá giáp táo
 function shoot() {
   if (state !== 'playing' || index !== 2 || performance.now() - lastShot < 300) 
     return;
@@ -206,7 +238,23 @@ function moveBullets() {
   }
 }
 
-
+// 5. Màn 4: chướng ngại vật di chuyển
+function addObstacles() {
+  let count = 1;
+  if (eaten >= 9) 
+    count = 4;
+  else if (eaten >= 7) 
+    count = 3;
+  else if (eaten >= 4) 
+    count = 2;
+  while (obstacles.length < count) {
+    let p = spawn('obstacle');
+    if (!p) 
+      return;
+    let d = directions[Math.floor(Math.random() * 4)];
+    obstacles.push({x: p.x, y: p.y, dir: d});
+  }
+}
 function moveObstacles() {
   for (let i = 0; i < obstacles.length; i++) {
     let o = obstacles[i];
@@ -277,6 +325,10 @@ function draw() {
   }
   if (index === 3) 
     goal += ' · Chướng ngại: ' + obstacles.length;
+  if (index === 5) {
+    if (reverseControls) goal += ' · ĐẢO: ←/A đi phải, →/D đi trái';
+    else goal += ' · Trái/phải: BÌNH THƯỜNG';
+  }
   get('lvl').textContent = 'Màn ' + (index + 1) + ': ' + level.name;
   get('obj').textContent = goal;
   get('sc').textContent = 'Điểm: ' + score;
@@ -308,13 +360,13 @@ function setState(next) {
   } else if (next === 'win') {
     get('ot').textContent = 'Chúc mừng!'; 
     get('ob').textContent = 'Chọn màn';
-    get('op').textContent = 'Bạn đã thoát khỏi khu rừng và hoàn thành trò chơi. Điểm: ' + score;
+    get('op').textContent = 'Bạn đã hoàn thành cả ' + levels.length + ' màn chơi. Điểm: ' + score;
   }
   draw(); 
   get('ob').focus();
 }
 function complete() {
-  if (index === 4) 
+  if (index === levels.length - 1) 
     setState('win');
   else 
     setState('next');
@@ -407,4 +459,3 @@ setInterval(function () {
   }
   draw();
 }, 40);
-}
