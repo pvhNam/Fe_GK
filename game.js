@@ -1,18 +1,17 @@
 // 1. Thông tin các màn chơi (index 0 đến 5 tương ứng màn 1 đến 6).
 const levels = [
   {name: 'Cổ điển', need: 15,
-    description: 'Ăn 15 táo. Rắn có thể đi xuyên qua mép bàn.'},
+    description: 'Ăn 15 táo. Rắn có thể đi xuyên tường.'},
   {name: 'Giải đố mê cung', need: 8,
-    description: 'Ăn 8 táo bên ngoài để mở cửa bên trái mê cung, sau đó vào ăn Táo Vàng.'},
+    description: 'Ăn 8 táo bên để mở cửa mê cung, sau đó vào ăn Táo Vàng.'},
   {name: 'Tấn công Táo', need: 10,
     description: 'Nhấn Space phá giáp táo rồi ăn. Cần 10 quả để qua màn.'},
   {name: 'Vượt chướng ngại vật', need: 10,
-    description: 'Ăn 10 táo và tránh vật tím. Số vật tăng khi ăn 4, 7, 9 quả.'},
+    description: 'Ăn 10 táo và tránh vật tím.'},
   {name: 'Thoát khỏi khu rừng', need: 8,
-    description: 'Ăn 8 táo để xuất hiện chìa khóa vàng. Lấy khóa rồi tới cửa ở góc dưới bên phải.'},
-  // MÀN 6: mỗi quả táo làm đổi ngược phím trái/phải một lần.
+    description: 'Ăn 8 táo để xuất hiện chìa khóa vàng. Để mở cửa để thoát.'},
   {name: 'Đảo trái phải', need: 10,
-    description: 'Ăn mỗi quả táo sẽ đổi trái/phải: bình thường → đảo ngược → bình thường. Khi đảo, ←/A đi phải và →/D đi trái; lên/xuống giữ nguyên. Ăn 10 táo để thắng.'}
+    description: 'Ăn mỗi quả táo sẽ đổi trái/phải. Ăn 10 táo để thắng.'}
 ];
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
@@ -162,7 +161,7 @@ function step() {
   }
   let eat = same(head, apple) && apple.shield === 0;
   let body = snake.slice();
-  if (!eat) body.pop(); // Đuôi sẽ rời ô hiện tại nếu rắn không ăn táo.
+  if (!eat) body.pop();
   if (head.x < 0 || head.x >= N || head.y < 0 || head.y >= N ||
       contains(walls, head) || contains(body, head) || contains(obstacles, head) || same(head, gate)) {
     setState('dead'); 
@@ -185,7 +184,7 @@ function step() {
   if (eat) {
     eaten++; 
     score += 10; 
-    // MÀN 6: chỉ đổi cách bấm phím, không tự quay đầu rắn.
+    // MÀN 6: chỉ đổi cách bấm phím.
     if (index === 5) reverseControls = !reverseControls;
     apple = null;
     if (eaten < level.need) 
@@ -212,7 +211,6 @@ function turn(next) {
   let previous = dir;
   if (queue.length > 0) 
     previous = queue[queue.length - 1];
-  // Chỉ cho rẽ vuông góc để rắn không quay ngược vào thân.
   if (next[0] * previous[0] + next[1] * previous[1] === 0) 
     queue.push(next);
 }
@@ -318,7 +316,7 @@ function draw() {
   }
   if (index === 4) {
     if (eaten < level.need) 
-      goal += ' · Chìa khóa chưa xuất hiện';
+      goal += ' ';
     else if (!hasKey) 
       goal += ' · Tìm chìa khóa vàng';
     else goal += ' · Tìm cửa xanh';
@@ -327,7 +325,7 @@ function draw() {
     goal += ' · Chướng ngại: ' + obstacles.length;
   if (index === 5) {
     if (reverseControls) goal += ' · ĐẢO: ←/A đi phải, →/D đi trái';
-    else goal += ' · Trái/phải: BÌNH THƯỜNG';
+    else goal += '';
   }
   get('lvl').textContent = 'Màn ' + (index + 1) + ': ' + level.name;
   get('obj').textContent = goal;
